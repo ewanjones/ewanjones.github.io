@@ -49,27 +49,11 @@
 
 <p>Event sourcing is an excellent technique for businesses processes where events occur and the system should react in some way. The idea behind this architecture is that we record events and subscribe actions to them.</p>
 
-<h2 id="processes-events-and-actions">Processes, Events and Actions</h2>
+<h2 id="processes-and-events">Processes and Events</h2>
 
-<p>An example  domain model might look something like this:</p>
+<p>We can model a process by storing any events which happen to a process object. Any data we think is important to the event and the rest of the process (for tracking and monitoring) can be stored in a json format or similar. Let’s take an order tracking system:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-
-
-<span class="k">class</span> <span class="nc">OrderEventType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="n">CUSTOMER_REQUESTED</span> <span class="o">=</span> <span class="s">"CUSTOMER_REQUESTED"</span>
-    <span class="n">PAYMENT_RECEIVED</span> <span class="o">=</span> <span class="s">"CUSTOMER_REQUESTED"</span>
-    <span class="n">PAYMENT_SUCCEEDED</span> <span class="o">=</span> <span class="s">"PAYMENT_SUCCEEDED"</span>
-    <span class="n">PAYMENT_FAILED</span> <span class="o">=</span> <span class="s">"PAYMENT_FAILED"</span>
-    <span class="n">WAREHOUSE_RECEIVED</span> <span class="o">=</span> <span class="s">"WAREHOUSE_RECEIVED"</span>
-    <span class="n">PACKAGING_STARTED</span> <span class="o">=</span> <span class="s">"PACKAGING_STARTED"</span>
-    <span class="n">ORDER_PACKAGED</span> <span class="o">=</span> <span class="s">"ORDER_PACKAGED"</span>
-    <span class="n">COURIER_COLLECTED</span> <span class="o">=</span> <span class="s">"COURIER_COLLECTED"</span>
-    <span class="n">PACKAGE_DELIVERED</span> <span class="o">=</span> <span class="s">"PACKAGE_DELIVERED"</span>
-
-
-<span class="k">class</span> <span class="nc">Order</span><span class="p">:</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Order</span><span class="p">:</span>
     <span class="nb">id</span> <span class="o">=</span> <span class="mi">12345</span>
     <span class="n">customer_name</span> <span class="o">=</span> <span class="s">"Ewan"</span>
     <span class="n">item_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mf">12.</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">55</span><span class="p">]</span>
@@ -86,7 +70,31 @@
 
 </code></pre></div></div>
 
-<p>Event types should be as granular as possible, recording when things are started and finished. You can create a top level module for all <code class="highlighter-rouge">commands</code> that will be triggered from outside (interfaces). The purpose of commands is to validate the request, fetch the process and record the event happening. The only errors that should occur are if there is a legitimate problem. This can be caught in the interface layer (a REST API) and returned to the user. Remember, any unexpected errors will mean the event won’t be recorded, so it’s best to keep this module free of any complex logic.</p>
+<p>Event types should be as granular as possible, recording when things start and finish. They provide a detailed audit of everything that happens, so if something goes wrong, you want to know exactly where to find the point of failure, e.g. between an order and the packaging actually starting. Naming is important, and should capture exactly what that event was. We use a convention of always keeping them in the past tense and include a verb.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">OrderEventType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">CUSTOMER_REQUESTED</span> <span class="o">=</span> <span class="s">"CUSTOMER_REQUESTED"</span>
+    <span class="n">PAYMENT_RECEIVED</span> <span class="o">=</span> <span class="s">"CUSTOMER_REQUESTED"</span>
+    <span class="n">PAYMENT_SUCCEEDED</span> <span class="o">=</span> <span class="s">"PAYMENT_SUCCEEDED"</span>
+    <span class="n">PAYMENT_FAILED</span> <span class="o">=</span> <span class="s">"PAYMENT_FAILED"</span>
+    <span class="n">WAREHOUSE_RECEIVED</span> <span class="o">=</span> <span class="s">"WAREHOUSE_RECEIVED"</span>
+    <span class="n">PACKAGING_STARTED</span> <span class="o">=</span> <span class="s">"PACKAGING_STARTED"</span>
+    <span class="n">ORDER_PACKAGED</span> <span class="o">=</span> <span class="s">"ORDER_PACKAGED"</span>
+    <span class="n">COURIER_COLLECTED</span> <span class="o">=</span> <span class="s">"COURIER_COLLECTED"</span>
+    <span class="n">PACKAGE_DELIVERED</span> <span class="o">=</span> <span class="s">"PACKAGE_DELIVERED"</span>
+</code></pre></div></div>
+
+<p>This format allows you to not only easily track one process through it’s events, you can aggregate events easily for getting whole system reports.</p>
+
+<h2 id="commands">Commands</h2>
+
+<p>You can create a top level module for all <code class="highlighter-rouge">commands</code> that will be triggered from outside (interfaces). The purpose of commands is to validate the request, fetch the process and record the event happening.</p>
+
+<p>The only errors that should occur are if there is a legitimate problem. This can be caught in the interface layer (a REST API) and returned to the user. Remember, any unexpected errors will mean the event won’t be recorded, so it’s best to keep this module free of any complex logic.</p>
+
+<h2 id="actions">Actions</h2>
+
+<p>Actions are things which are triggered when we create an event. These functions should only do one thing. This means that if something goes wrong whilst running that action, it won’t affect the other actions which need to happen. We also wrap the action call in a try/except in order to catch the error message and attach to the event.</p>
 
   </div><a class="u-url" href="/architecture/2020/03/04/event-sourcing.html" hidden></a>
 </article>

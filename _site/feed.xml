@@ -1,28 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.0.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2020-03-05T23:56:03+00:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Ewan’s Blog</title><subtitle>Interesting findings</subtitle><entry><title type="html">Implementing an event driven architecture</title><link href="http://localhost:4000/architecture/2020/03/04/event-sourcing.html" rel="alternate" type="text/html" title="Implementing an event driven architecture" /><published>2020-03-04T20:32:00+00:00</published><updated>2020-03-04T20:32:00+00:00</updated><id>http://localhost:4000/architecture/2020/03/04/event-sourcing</id><content type="html" xml:base="http://localhost:4000/architecture/2020/03/04/event-sourcing.html">&lt;h2 id=&quot;why-should-i-use-event-sourcing&quot;&gt;Why should I use event sourcing?&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.0.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2020-03-08T16:17:37+00:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Ewan’s Blog</title><subtitle>Interesting findings</subtitle><entry><title type="html">Implementing an event driven architecture</title><link href="http://localhost:4000/architecture/2020/03/04/event-sourcing.html" rel="alternate" type="text/html" title="Implementing an event driven architecture" /><published>2020-03-04T20:32:00+00:00</published><updated>2020-03-04T20:32:00+00:00</updated><id>http://localhost:4000/architecture/2020/03/04/event-sourcing</id><content type="html" xml:base="http://localhost:4000/architecture/2020/03/04/event-sourcing.html">&lt;h2 id=&quot;why-should-i-use-event-sourcing&quot;&gt;Why should I use event sourcing?&lt;/h2&gt;
 
 &lt;p&gt;Event sourcing is an excellent technique for businesses processes where events occur and the system should react in some way. The idea behind this architecture is that we record events and subscribe actions to them.&lt;/p&gt;
 
-&lt;h2 id=&quot;processes-events-and-actions&quot;&gt;Processes, Events and Actions&lt;/h2&gt;
+&lt;h2 id=&quot;processes-and-events&quot;&gt;Processes and Events&lt;/h2&gt;
 
-&lt;p&gt;An example  domain model might look something like this:&lt;/p&gt;
+&lt;p&gt;We can model a process by storing any events which happen to a process object. Any data we think is important to the event and the rest of the process (for tracking and monitoring) can be stored in a json format or similar. Let’s take an order tracking system:&lt;/p&gt;
 
-&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;datetime&lt;/span&gt;
-&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Enum&lt;/span&gt;
-
-
-&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OrderEventType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;CUSTOMER_REQUESTED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;CUSTOMER_REQUESTED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;PAYMENT_RECEIVED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;CUSTOMER_REQUESTED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;PAYMENT_SUCCEEDED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PAYMENT_SUCCEEDED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;PAYMENT_FAILED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PAYMENT_FAILED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;WAREHOUSE_RECEIVED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;WAREHOUSE_RECEIVED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;PACKAGING_STARTED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PACKAGING_STARTED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;ORDER_PACKAGED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;ORDER_PACKAGED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;COURIER_COLLECTED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;COURIER_COLLECTED&quot;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;PACKAGE_DELIVERED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PACKAGE_DELIVERED&quot;&lt;/span&gt;
-
-
-&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Order&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Order&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
     &lt;span class=&quot;nb&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;12345&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;customer_name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Ewan&quot;&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;item_ids&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;12.&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;34&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;55&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
@@ -39,4 +23,28 @@
 
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;Event types should be as granular as possible, recording when things are started and finished. You can create a top level module for all &lt;code class=&quot;highlighter-rouge&quot;&gt;commands&lt;/code&gt; that will be triggered from outside (interfaces). The purpose of commands is to validate the request, fetch the process and record the event happening. The only errors that should occur are if there is a legitimate problem. This can be caught in the interface layer (a REST API) and returned to the user. Remember, any unexpected errors will mean the event won’t be recorded, so it’s best to keep this module free of any complex logic.&lt;/p&gt;</content><author><name></name></author><summary type="html">Why should I use event sourcing?</summary></entry></feed>
+&lt;p&gt;Event types should be as granular as possible, recording when things start and finish. They provide a detailed audit of everything that happens, so if something goes wrong, you want to know exactly where to find the point of failure, e.g. between an order and the packaging actually starting. Naming is important, and should capture exactly what that event was. We use a convention of always keeping them in the past tense and include a verb.&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OrderEventType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;CUSTOMER_REQUESTED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;CUSTOMER_REQUESTED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PAYMENT_RECEIVED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;CUSTOMER_REQUESTED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PAYMENT_SUCCEEDED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PAYMENT_SUCCEEDED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PAYMENT_FAILED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PAYMENT_FAILED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;WAREHOUSE_RECEIVED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;WAREHOUSE_RECEIVED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PACKAGING_STARTED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PACKAGING_STARTED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ORDER_PACKAGED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;ORDER_PACKAGED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;COURIER_COLLECTED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;COURIER_COLLECTED&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;PACKAGE_DELIVERED&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;PACKAGE_DELIVERED&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This format allows you to not only easily track one process through it’s events, you can aggregate events easily for getting whole system reports.&lt;/p&gt;
+
+&lt;h2 id=&quot;commands&quot;&gt;Commands&lt;/h2&gt;
+
+&lt;p&gt;You can create a top level module for all &lt;code class=&quot;highlighter-rouge&quot;&gt;commands&lt;/code&gt; that will be triggered from outside (interfaces). The purpose of commands is to validate the request, fetch the process and record the event happening.&lt;/p&gt;
+
+&lt;p&gt;The only errors that should occur are if there is a legitimate problem. This can be caught in the interface layer (a REST API) and returned to the user. Remember, any unexpected errors will mean the event won’t be recorded, so it’s best to keep this module free of any complex logic.&lt;/p&gt;
+
+&lt;h2 id=&quot;actions&quot;&gt;Actions&lt;/h2&gt;
+
+&lt;p&gt;Actions are things which are triggered when we create an event. These functions should only do one thing. This means that if something goes wrong whilst running that action, it won’t affect the other actions which need to happen. We also wrap the action call in a try/except in order to catch the error message and attach to the event.&lt;/p&gt;</content><author><name></name></author><summary type="html">Why should I use event sourcing?</summary></entry></feed>
